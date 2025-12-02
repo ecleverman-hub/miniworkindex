@@ -1,0 +1,23 @@
+{
+  "name": "个人工作台 · 效率与健康中心",
+  "short_name": "个人工作台",
+  "description": "聚焦今日要事，关注身心健康，保持长期原则的个人效率与健康工作台。",
+  "start_url": "./首页.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#3b82f6",
+  "background_color": "#f7faff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
