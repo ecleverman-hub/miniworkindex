@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的个人工作台 · 效率与健康中心</title>
+ <!-- 新增：PWA 相关 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon-192.png" type="image/png">
+
+    <!-- iOS 支持（可选但推荐） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <style>
+        /* 全局基础设置 */
+        :root {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            color-scheme: light dark;
+            --color-primary: #3b82f6; /* 蓝色 */
+            --color-secondary: #059669; /* 绿色 */
+            --color-text: #333;
+            --color-subtle: #4a5568;
+            --color-background: #f7faff; /* 极浅蓝色背景 */
+            --color-card-bg: rgba(255, 255, 255, 0.98);
+            --color-border: rgba(220, 230, 255, 0.8);
+            --shadow-md: 0 10px 20px rgba(25, 55, 125, 0.1);
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 默认禁止选择，让它更像一个应用 */
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 30px; 
+            background: var(--color-background);
+        }
+        
+        /* App 主容器 */
+        .app {
+            width: 100%;
+            max-width: 1400px; /* 进一步拓宽，适应四栏布局 */
+            background: var(--color-card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-md); 
+            padding: 32px 36px 28px;
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+        }
+
+        /* 头部：标题、时钟 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--color-border);
+        }
+        .title-block h1 {
+            font-size: 32px;
+            margin: 0 0 4px;
+            color: #1e3a8a;
+            font-weight: 800;
+        }
+        .title-block p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.85;
+            color: var(--color-subtle);
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: #e0f2fe; 
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+            font-size: 13px;
+            margin-right: 10px;
+            white-space: nowrap;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .clock-box {
+            text-align: right;
+            line-height: 1.2;
+        }
+        .clock {
+            font-size: 48px;
+            font-weight: 600;
+            color: #1e3a8a;
+            font-variant-numeric: tabular-nums;
+        }
+        .clock-sub {
+            font-size: 16px;
+            opacity: 0.9;
+            color: var(--color-subtle);
+        }
+
+        /* 核心网格布局：四列布局 */
+        .main-grid {
+            display: grid;
+            /* 四栏：To-Do | 状态/专注 | 信息/日历 | 长期原则 */
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px; 
+            margin-top: 15px;
+        }
+
+        /* 卡片基础样式 */
+        .card {
+            border-radius: 18px;
+            border: 1px solid var(--color-border);
+            padding: 24px; 
+            background: linear-gradient(135deg, #ffffff, #fcfcff);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+            min-height: 400px; /* 统一卡片高度 */
+            display: flex;
+            flex-direction: column;
+        }
+        .card h2 {
+            font-size: 18px; 
+            margin: 0 0 15px;
+            color: #1e3a8a;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 1. 待办事项 (To-Do List) */
+        #todo-input-wrap {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        #todo-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--color-text);
+            font-family: inherit;
+        }
+        #todo-add-btn {
+            padding: 10px 15px;
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .todo-list-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .todo-list-item input[type="checkbox"] {
+            margin-top: 5px;
+            margin-right: 10px;
+            transform: scale(1.1);
+            accent-color: var(--color-primary);
+            cursor: pointer;
+        }
+        .todo-text {
+            flex-grow: 1;
+            user-select: text;
+        }
+        .todo-text.done {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .todo-remove {
+            color: #ef4444;
+            margin-left: 10px;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+
+        /* 2. 状态卡片 & 专注 */
+        .status-label {
+            font-size: 14px;
+            margin: 10px 0 4px;
+            color: var(--color-subtle);
+            font-weight: 500;
+        }
+        .status-value {
+            font-size: 26px; 
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .status-value.ok {
+            color: var(--color-secondary); 
+        }
+        .status-value.rest {
+            color: #f59e0b; 
+        }
+        .status-small {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 6px;
+            color: var(--color-subtle);
+        }
+        .focus-area {
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-line;
+            min-height: 80px;
+            border: 1px dashed #93c5fd;
+            padding: 10px;
+            border-radius: 8px;
+            color: var(--color-text);
+            background-color: #f7f9ff;
+            user-select: text;
+        }
+        .list {
+            margin: 10px 0 0;
+            padding-left: 20px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+        .list li {
+            margin-bottom: 5px;
+        }
+        
+        /* 3. 信息区：引语与日历 */
+        #quote-area {
+            font-style: italic;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--color-border);
+            color: #555;
+            min-height: 100px;
+        }
+        #quote-author {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: right;
+            color: var(--color-primary);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .day-header {
+            font-weight: 600;
+            color: var(--color-subtle);
+        }
+        .day-cell {
+            padding: 6px 0;
+            border-radius: 4px;
+            background-color: #f0f4f9;
+        }
+        .day-cell.current {
+            background-color: var(--color-primary);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        /* 4. 长期原则 */
+        .lt-view {
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre-line;
+            padding: 4px 0;
+            color: var(--color-text);
+            flex-grow: 1; /* 撑满卡片空间 */
+            overflow-y: auto;
+            user-select: text;
+        }
+        
+        /* 通用编辑区 */
+        .lt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .tiny-btn {
+            font-size: 12px;
+            border-radius: 999px;
+            padding: 6px 14px;
+            border: 1px solid rgba(120,140,200,0.5);
+            background: rgba(255,255,255,0.8);
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--color-subtle);
+        }
+        .tiny-btn.primary {
+            background: var(--color-primary);
+            color: #fff;
+            border-color: var(--color-primary);
+        }
+        .edit-area {
+            margin-top: 10px;
+        }
+        .edit-textarea {
+            width: 100%;
+            min-height: 120px;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid rgba(180,190,230,0.9);
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.5;
+            color: var(--color-text);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .edit-hint {
+            font-size: 12px;
+            opacity: 0.75;
+            margin-top: 6px;
+            color: #666;
+        }
+        .footer-tip {
+            margin-top: 25px;
+            font-size: 13px;
+            opacity: 0.75;
+            text-align: center;
+            color: var(--color-subtle);
+            padding-top: 15px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: repeat(2, 1fr); /* 四栏变两栏 */
+            }
+            .card { min-height: auto; }
+            #status-card { order: -1; } /* 状态卡片优先显示 */
+        }
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr; /* 单列 */
+                gap: 20px;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 15px;
+            }
+            .clock-box {
+                text-align: left;
+                width: 100%;
+                margin-top: 8px;
+            }
+            .clock { font-size: 32px; }
+            .app { padding: 20px 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <div class="title-block">
+            <h1>🧠 个人工作台 · 效率与健康中心</h1>
+            <p>一切从这里开始：聚焦今日要事，关注身心健康，保持长期原则。</p>
+            <div class="badge-row">
+                <span class="pill">✅ 每日待办清单</span>
+                <span class="pill">🌟 护眼计时提醒</span>
+                <span class="pill">📅 关键信息聚合</span>
+            </div>
+        </div>
+        <div class="clock-box">
+            <div class="clock" id="clock">--:--:--</div>
+            <div class="clock-sub" id="clock-sub">加载中…</div>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        
+        <div class="card" id="todo-card">
+            <h2>📝 我的今日待办清单</h2>
+            <div id="todo-input-wrap">
+                <input type="text" id="todo-input" placeholder="输入新的待办事项..." maxlength="80">
+                <button id="todo-add-btn" class="tiny-btn primary">添加</button>
+            </div>
+            <div id="todo-list" style="overflow-y: auto; flex-grow: 1;">
+                </div>
+        </div>
+
+        <div class="card" id="status-card">
+            <h2>✨ 健康与工作状态</h2>
+            
+            <div class="status-label">工作模式：</div>
+            <div class="status-value" id="work-status">检测中…</div>
+            <div class="status-small" id="next-rest">下次护眼提醒：-- 分钟后</div>
+
+            <div class="lt-header" style="margin-top: 20px; border-top: 1px dashed var(--color-border); padding-top: 15px;">
+                <h2>🎯 今日专注（M.I.T.）</h2>
+                <button id="focus-toggle-edit" class="tiny-btn">编辑目标</button>
+            </div>
+            <div id="focus-view" class="focus-area"></div>
+
+            <div id="focus-edit-wrap" class="edit-area" style="display:none;">
+                <textarea id="focus-editor" class="edit-textarea" placeholder="一行一个，只写 3 件今天必须完成的 M.I.T."></textarea>
+                <div style="margin-top:8px; text-align:right;">
+                    <button id="focus-save" class="tiny-btn primary">保存目标</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📅 信息聚合</h2>
+            <div id="quote-area">
+                加载每日一句中...
+                <span id="quote-author"></span>
+            </div>
+            
+            <h2 style="margin-top: 0;">🗓️ 本月日历</h2>
+            <div id="calendar-view" class="calendar-grid">
+                </div>
+        </div>
+
+        <div class="card">
+            <div class="lt-header">
+                <h2>🌿 长期原则与自我关怀</h2>
+                <button id="lt-toggle-edit" class="tiny-btn">编辑原则</button>
+            </div>
+
+            <div id="lt-view" class="lt-view"></div>
+
+            <div id="lt-edit-wrap" class="edit-area" style="display:none;">
+                <textarea id="lt-editor" class="edit-textarea"></textarea>
+                <div class="edit-hint">
+                    👉 写下你的长期目标、工作哲学、或给自己的生活原则。
+                </div>
+                <div style="margin-top:8px; text-align:right;">
+                    <button id="lt-save" class="tiny-btn primary">保存原则</button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="footer-tip">
+        🌱 建议：将本页设置为浏览器首页（或固定标签页），保持打开，让它成为您的健康与效率“后台”。
+    </div>
+</div>
+
+<script>
+    // =============================
+    // 配置区
+    // =============================
+
+    const REST_INTERVAL_MINUTES = 20;
+    const WORK_PERIODS = [
+        { start: "08:30", end: "12:00" },
+        { start: "14:00", end: "18:00" }
+    ];
+    const DAILY_REMINDERS = {
+        "09:30": "上午的第一次休息 🎉\n\n✦ **仪式感护眼：** 远眺 5 分钟，闭眼或热敷 2 分钟，拉伸肩颈。",
+        "15:30": "下午中场加油站 🔋\n\n✦ **午后抗疲劳：** 站起来走动 5 分钟，看远处，慢速深呼吸 10 次。",
+    };
+    
+    // 默认数据
+    const DEFAULT_LONG_TERM_TEXT = `• 健康是第一生产力：宁愿少做一点，也要睡饱、吃好。
+• 专注于价值而非忙碌：每天只做 3 件最重要的事（M.I.T.）。
+• 保持好奇心：每天学一点新东西。
+• 呼吸与放松：工作感到压力时，深呼吸 6 次。`;
+    
+    const DEFAULT_FOCUS_TEXT = `1. [双击编辑] 今日 M.I.T. 1
+2. [双击编辑] 今日 M.I.T. 2
+3. [双击编辑] 今日 M.I.T. 3`;
+
+    // 每日一言示例（因无法调用外部API，使用本地数据）
+    const DAILY_QUOTES = [
+        { quote: "心之所向，素履以往。生如逆旅，一苇以航。", author: "七堇年" },
+        { quote: "把时间花在你最重视的事情上，这才是真正的效率。", author: "史蒂芬·柯维" },
+        { quote: "我们最大的弱点在于放弃。成功的必经之路就是不断地重来一次。", author: "托马斯·爱迪生" },
+        { quote: "生活的要诀，是原谅自己，接受自己，然后爱自己。", author: "佚名" },
+        { quote: "专注当下，才是对抗焦虑的最好方式。", author: "史蒂夫·乔布斯" },
+        { quote: "健康是人生第一财富。", author: "爱默生" }
+    ];
+    
+    // Local Storage Keys V4
+    const LONG_TERM_KEY = "health_hub_long_term_notes_v4";
+    const FOCUS_KEY = "health_hub_focus_today_v4";
+    const TODO_KEY = "health_hub_todo_list_v4";
+
+    // =============================
+    // 工具函数 (保持不变)
+    // =============================
+    function parseTimeToMinutes(hhmm) {
+        const [h, m] = hhmm.split(":").map(Number);
+        return h * 60 + m;
+    }
+    function getMinutesFromMidnight(date) {
+        return date.getHours() * 60 + date.getMinutes();
+    }
+    function inWorkTime(now) {
+        const minutes = getMinutesFromMidnight(now);
+        return WORK_PERIODS.some(p => {
+            const start = parseTimeToMinutes(p.start);
+            const end = parseTimeToMinutes(p.end);
+            return minutes >= start && minutes <= end;
+        });
+    }
+    function updateClock(now) {
+        // ... (时钟更新逻辑) ...
+        const clockEl = document.getElementById("clock");
+        const subEl = document.getElementById("clock-sub");
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        const ss = String(now.getSeconds()).padStart(2, "0");
+        clockEl.textContent = `${hh}:${mm}:${ss}`;
+        const weekdayNames = ["日", "一", "二", "三", "四", "五", "六"];
+        const y = now.getFullYear();
+        const mon = now.getMonth() + 1;
+        const d = now.getDate();
+        const wd = weekdayNames[now.getDay()];
+        subEl.textContent = `${y} 年 ${mon} 月 ${d} 日 · 星期${wd}`;
+    }
+    function updateWorkStatus(isWorking, remainingMinutes) {
+        // ... (状态更新逻辑) ...
+        const statusEl = document.getElementById("work-status");
+        const nextRestEl = document.getElementById("next-rest");
+        if (isWorking) {
+            statusEl.textContent = "专注工作模式 (提醒已启用)";
+            statusEl.classList.remove("rest");
+            statusEl.classList.add("ok");
+            if (remainingMinutes != null) {
+                nextRestEl.textContent = `下次 20-20-20 休息：约 ${remainingMinutes} 分钟后`;
+            } else {
+                nextRestEl.textContent = "下次休息时间计算中…";
+            }
+        } else {
+            statusEl.textContent = "非工作时间 (提醒已暂停)";
+            statusEl.classList.remove("ok");
+            statusEl.classList.add("rest");
+            nextRestEl.textContent = `当前不在设定工作时段（${WORK_PERIODS.map(p => `${p.start}–${p.end}`).join(' / ')}），休息一下吧！`;
+        }
+    }
+
+    // =============================
+    // 每日一言 (Quote)
+    // =============================
+    function initDailyQuote() {
+        const todayIndex = new Date().getDate() % DAILY_QUOTES.length;
+        const quoteObj = DAILY_QUOTES[todayIndex];
+        
+        const quoteEl = document.getElementById("quote-area");
+        const authorEl = document.getElementById("quote-author");
+
+        quoteEl.textContent = "“ " + quoteObj.quote + " ”";
+        authorEl.textContent = "—— " + quoteObj.author;
+    }
+
+    // =============================
+    // 简单日历 (Calendar)
+    // =============================
+    function initSimpleCalendar() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth(); 
+        const todayDate = now.getDate();
+        const calendarEl = document.getElementById("calendar-view");
+        
+        // 1. 获取本月第一天是周几 (0=周日, 1=周一...)
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        // 2. 获取本月总天数
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+        let html = dayNames.map(d => `<div class="day-header">${d}</div>`).join('');
+
+        // 填充月份前的空白（上个月的日期）
+        // getDay() 返回 0-6。如果第一天是周一(1)，则填充 1 个空白；周日(0)则填充 0 个
+        const startDay = firstDayOfMonth === 0 ? 0 : firstDayOfMonth; // 从周日开始排，周日是0
+        for (let i = 0; i < startDay; i++) {
+            html += `<div class="day-cell" style="background: none;"></div>`;
+        }
+        
+        // 填充本月日期
+        for (let d = 1; d <= daysInMonth; d++) {
+            const isToday = (d === todayDate) ? 'current' : '';
+            html += `<div class="day-cell ${isToday}">${d}</div>`;
+        }
+
+        calendarEl.innerHTML = html;
+    }
+
+    // =============================
+    // 长期原则 & 今日专注 (通用加载/保存逻辑)
+    // =============================
+    function setupTextEditor(viewId, editorId, toggleBtnId, saveBtnId, editWrapId, key, defaultText) {
+        const view = document.getElementById(viewId);
+        const editor = document.getElementById(editorId);
+        const toggleBtn = document.getElementById(toggleBtnId);
+        const editWrap = document.getElementById(editWrapId);
+
+        function loadText() {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                if (key === FOCUS_KEY) {
+                    const parsed = JSON.parse(raw);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    if (parsed && parsed.date === todayStr) {
+                        return parsed.text;
+                    } else {
+                        return null; // 日期不匹配，重置
+                    }
+                }
+                return String(raw);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveText(text) {
+            try {
+                if (key === FOCUS_KEY) {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    localStorage.setItem(key, JSON.stringify({ date: todayStr, text: text || "" }));
+                } else {
+                    localStorage.setItem(key, text || "");
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        let saved = loadText();
+        let currentText = saved == null ? defaultText : saved;
+
+        view.textContent = currentText;
+        editor.value = currentText;
+
+        let editing = false;
+
+        toggleBtn.addEventListener("click", () => {
+            editing = !editing;
+            if (editing) {
+                editWrap.style.display = "block";
+                toggleBtn.textContent = "收起编辑";
+            } else {
+                const currentTextInEditor = editor.value.trim();
+                if (currentTextInEditor !== view.textContent.trim()) {
+                    saveText(currentTextInEditor);
+                    view.textContent = currentTextInEditor || defaultText;
+                }
+                editWrap.style.display = "none";
+                toggleBtn.textContent = (key === LONG_TERM_KEY) ? "编辑原则" : "编辑目标";
+            }
+        });
+        
+        if (key === FOCUS_KEY) {
+            view.addEventListener("dblclick", () => {
+                if (!editing) { toggleBtn.click(); }
+            });
+        }
+
+        document.getElementById(saveBtnId).addEventListener("click", () => {
+            const txt = editor.value.trim();
+            saveText(txt);
+            view.textContent = txt || defaultText;
+            editing = false;
+            editWrap.style.display = "none";
+            toggleBtn.textContent = (key === LONG_TERM_KEY) ? "编辑原则" : "编辑目标";
+        });
+    }
+
+    function initLongTerm() {
+        setupTextEditor("lt-view", "lt-editor", "lt-toggle-edit", "lt-save", "lt-edit-wrap", LONG_TERM_KEY, DEFAULT_LONG_TERM_TEXT);
+    }
+    
+    function initFocusToday() {
+        setupTextEditor("focus-view", "focus-editor", "focus-toggle-edit", "focus-save", "focus-edit-wrap", FOCUS_KEY, DEFAULT_FOCUS_TEXT);
+    }
+    
+    // =============================
+    // 待办事项 (To-Do List)
+    // =============================
+    function loadTodos() {
+        try {
+            const raw = localStorage.getItem(TODO_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveTodos(todos) {
+        try {
+            localStorage.setItem(TODO_KEY, JSON.stringify(todos));
+        } catch (e) { /* ignore */ }
+    }
+
+    function renderTodos() {
+        const listEl = document.getElementById('todo-list');
+        const todos = loadTodos();
+        listEl.innerHTML = '';
+
+        if (todos.length === 0) {
+            listEl.innerHTML = '<div style="opacity: 0.6; text-align: center; padding: 30px 0;">👏 没有未完成事项，真棒！</div>';
+            return;
+        }
+
+        todos.forEach((todo, index) => {
+            const item = document.createElement('div');
+            item.className = 'todo-list-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = todo.done;
+            checkbox.addEventListener('change', () => {
+                todos[index].done = checkbox.checked;
+                saveTodos(todos);
+                renderTodos();
+            });
+
+            const textSpan = document.createElement('span');
+            textSpan.className = todo.done ? 'todo-text done' : 'todo-text';
+            textSpan.textContent = todo.text;
+
+            const removeBtn = document.createElement('span');
+            removeBtn.className = 'todo-remove';
+            removeBtn.innerHTML = '&#10005;'; // X mark
+            removeBtn.title = '删除此项';
+            removeBtn.addEventListener('click', () => {
+                // 仅删除未完成的任务，或同时删除已完成的任务
+                todos.splice(index, 1);
+                saveTodos(todos);
+                renderTodos();
+            });
+
+            item.appendChild(checkbox);
+            item.appendChild(textSpan);
+            item.appendChild(removeBtn);
+            listEl.appendChild(item);
+        });
+    }
+
+    function initTodoList() {
+        const inputEl = document.getElementById('todo-input');
+        const addBtn = document.getElementById('todo-add-btn');
+
+        const addTodo = () => {
+            const text = inputEl.value.trim();
+            if (text) {
+                const todos = loadTodos();
+                todos.unshift({ text: text, done: false }); // 新任务放在最前面
+                saveTodos(todos);
+                inputEl.value = '';
+                renderTodos();
+            }
+        };
+
+        addBtn.addEventListener('click', addTodo);
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        renderTodos();
+    }
+
+    // =============================
+    // 主循环：护眼提醒
+    // =============================
+
+    (function () {
+        let lastRestTimestamp = Date.now();
+        let remindedToday = {}; 
+        let lastMinuteStr = "";
+
+        function loop() {
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10);
+            const hh = String(now.getHours()).padStart(2, "0");
+            const mm = String(now.getMinutes()).padStart(2, "0");
+            const currentTimeStr = `${hh}:${mm}`;
+
+            updateClock(now);
+
+            const working = inWorkTime(now);
+            const intervalMs = REST_INTERVAL_MINUTES * 60 * 1000;
+            let remainingMinutes = null;
+
+            if (!working) {
+                lastRestTimestamp = Date.now();
+                updateWorkStatus(false, null);
+                setTimeout(loop, 1000);
+                return;
+            }
+
+            const elapsed = Date.now() - lastRestTimestamp;
+            const toNext = Math.max(0, intervalMs - elapsed);
+            remainingMinutes = Math.max(0, Math.ceil(toNext / 60000));
+            updateWorkStatus(true, remainingMinutes);
+
+            // 1）20 分钟护眼提醒
+            if (elapsed >= intervalMs) {
+                alert(
+                    "👀 20-20-20 强制休息提醒！\n\n" +
+                    `你已专注工作约 ${REST_INTERVAL_MINUTES} 分钟！请起身/转头休息。\n\n` +
+                    "请立即：\n" +
+                    "1. 看 6 米之外的远处至少 20 秒\n" +
+                    "2. 刻意多眨眼，转动眼球\n" +
+                    "3. 活动脖子和肩膀\n\n" +
+                    "点击“确认”后，计时将重新开始。"
+                );
+                lastRestTimestamp = Date.now();
+            }
+
+            // 2）固定时间护眼提醒
+            if (currentTimeStr !== lastMinuteStr) {
+                lastMinuteStr = currentTimeStr;
+
+                for (const key in remindedToday) {
+                    if (remindedToday[key] !== todayStr) {
+                        delete remindedToday[key];
+                    }
+                }
+
+                if (DAILY_REMINDERS[currentTimeStr]) {
+                    const lastDate = remindedToday[currentTimeStr];
+                    if (lastDate !== todayStr) {
+                        alert("🔔 健康中心提醒：\n\n" + DAILY_REMINDERS[currentTimeStr]);
+                        remindedToday[currentTimeStr] = todayStr;
+                    }
+                }
+            }
+
+            setTimeout(loop, 1000);
+        }
+
+        window.addEventListener("load", function () {
+            // 初始化所有模块
+            initDailyQuote();
+            initSimpleCalendar();
+            initLongTerm();
+            initFocusToday();
+            initTodoList();
+            
+            // 首次启动弹窗
+            alert(
+                "🎉 工作台 V4 已启动！\n\n" +
+                "本次集成了：\n" +
+                "• 待办清单：可添加、完成和删除。\n" +
+                "• 日历/引语：提供关键信息和激励。\n" +
+                "• 护眼功能：20分钟强制休息提醒。\n\n" +
+                "数据保存在本地浏览器，请保持使用，持续关注效率与健康！"
+            );
+            loop();
+        });
+    })();
+  // 注册 Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(function (reg) {
+          console.log('Service Worker 注册成功', reg);
+        })
+        .catch(function (err) {
+          console.log('Service Worker 注册失败', err);
+        });
+    });
+  }
+</script>
+</body>
+</html>
