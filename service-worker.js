@@ -3,7 +3,7 @@ const CACHE_NAME = 'health-workbench-v1';
 // ⚠️ 这里写入你想要缓存的静态资源
 const ASSETS_TO_CACHE = [
   './',
-  './首页.html',
+  './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png'
@@ -55,8 +55,9 @@ self.addEventListener('fetch', event => {
         return res;
       }).catch(() => {
         // 可选：这里可以返回一个离线兜底页面
-        return caches.match('./首页.html');
+        return caches.match('./index.html');
       });
     })
   );
 });
+
