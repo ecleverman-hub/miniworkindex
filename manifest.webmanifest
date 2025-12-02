@@ -2,7 +2,7 @@
   "name": "个人工作台 · 效率与健康中心",
   "short_name": "个人工作台",
   "description": "聚焦今日要事，关注身心健康，保持长期原则的个人效率与健康工作台。",
-  "start_url": "./首页.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -21,3 +21,4 @@
     }
   ]
 }
+
